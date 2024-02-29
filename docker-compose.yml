@@ -1,0 +1,7 @@
+version: "3.9"
+services:
+  bot:
+    image: thermal-sticker-bot
+    build: .
+    env_file: ./.env
+    restart: on-failure
