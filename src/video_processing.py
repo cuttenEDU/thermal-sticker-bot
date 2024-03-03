@@ -5,7 +5,9 @@ from typing import BinaryIO, List
 
 from PIL import Image, ImageOps
 
-FRAME_EXTRACT_COMMAND = r'ffmpeg -loglevel quiet -i - -ss {0} -vframes 1 -f image2pipe -'
+from image_processing import sticker_to_bw_image
+
+FRAME_EXTRACT_COMMAND = r'ffmpeg -loglevel quiet -vcodec libvpx-vp9 -i - -ss {0} -vframes 1 -f image2pipe -f apng -'
 FRAME_COUNT_COMMAND = r'ffprobe -v error -select_streams v:0 -count_frames -show_entries stream=nb_read_frames -of csv=p=0 -'
 FRAMERATE_COMMAND = r'ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of csv=p=0 -'
 
@@ -31,18 +33,6 @@ def _get_framecount(video_bytes: bytes) -> int:
     return int(proc.stdout.decode("UTF-8").strip())
 
 
-def frame_to_grayscale(frame_bytes: bytes):
-    frame_io = io.BytesIO(frame_bytes)
-    frame = Image.open(frame_io, formats=["JPEG"])
-    frame = ImageOps.grayscale(frame)
-
-    frame_io = io.BytesIO()
-    frame.save(frame_io, format="JPEG")
-    frame_io.seek(0)
-
-    return frame_io.read()
-
-
 def extract_frames(video: BinaryIO, video_parts: List[float]) -> List[bytes]:
     video_bytes = video.read()
 
@@ -52,7 +42,8 @@ def extract_frames(video: BinaryIO, video_parts: List[float]) -> List[bytes]:
     frames = []
     for frame_timing in frames_timings:
         frame_bytes = _extract_frame(video_bytes, frame_timing)
-        frame_bytes = frame_to_grayscale(frame_bytes)
+        frame_io = io.BytesIO(frame_bytes)
+        frame_bytes = sticker_to_bw_image(frame_io, "PNG")
         frames.append(frame_bytes)
 
     return frames

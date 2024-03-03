@@ -4,8 +4,8 @@ import io
 from PIL import Image, ImageOps
 
 
-def sticker_to_bw_image(sticker_webp: BinaryIO) -> bytes:
-    sticker_image = Image.open(sticker_webp, formats=["WEBP"])
+def sticker_to_bw_image(sticker_webp: BinaryIO,image_format: str) -> bytes:
+    sticker_image = Image.open(sticker_webp, formats=[image_format])
 
     white_bg = Image.new("RGB", sticker_image.size, (255, 255, 255))
 
